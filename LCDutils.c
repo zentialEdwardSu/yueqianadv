@@ -52,7 +52,7 @@ Region Screen_to_region(Screen s){
  * 
  * @param screen
  */
-void Screen_mumao(Screen screen){
+void Screen_mumap(Screen screen){
     munmap(screen.display_mem, screen.size_x*screen.size_y*4);
 }
 
@@ -184,6 +184,22 @@ void write_region(int *color,Region region,Screen s){
     for (int y = region.start_point.y; y < region.end_point.y; y++){
         for(int i = (region.start_point.x + 800*y); i < (region.end_point.x + 800*y); i++){
             memcpy(s.display_mem+i*BIT,color,BIT);
+        }
+    }
+}
+
+/**
+ * @brief using select color to draw select region
+ * 
+ * @param colors color interger pointer
+ */
+void write_region_colors(char *colors_three_channel,Region region,Screen s){
+    for (int y = region.start_point.y; y < region.end_point.y; y++){
+        int i = 0;
+        for(int x = (region.start_point.x + 800*y); x < (region.end_point.x + 800*y); x++){
+            int color = mix_arbg(0,colors_three_channel[i],colors_three_channel[i+1],colors_three_channel[i+2]);
+            memcpy(s.display_mem+x*BIT,&color,BIT);
+            i +=3;
         }
     }
 }
