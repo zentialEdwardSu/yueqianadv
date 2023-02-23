@@ -1,4 +1,5 @@
 #include"include/def_lib.h"
+#include "include/LCDutils.h"
 
 void load_frame();
 void move_directional(int direction,int target[]);
@@ -7,28 +8,39 @@ void update_selection(int direction);
 void activate_func();
 void null_func();
 // void fresh();
-// int file_exists(char *filename);
+int file_exists(char *filename);
 void start_video();
 void continue_video();
 void pause_video();
+void stop_video();
+void new_video();
+void Black();
 
 int target[2]={0,0};
+Screen s;
+
+char video_name[1024] = {"Never.avi"};
+char full_command[1024] = {0};
+int need_pause = 0;
+
 char panel[y_border][x_border][50]={
-        {"[start video]"},
-        {"[pause video]"},
-        {"[continue video]"},
+        {"[start video]","[stop video]"},
+        {"[pause video]"," [new video]"},
+        {"[continue video]","[        ]"},
 };
 int in_enter = 0;
 int video_on = 0;
 void (*func_list[y_border][x_border])()={
-    {start_video},
-    {pause_video},
-    {continue_video},
+    {start_video, stop_video},
+    {pause_video, new_video},
+    {continue_video, null_func},
 };
 
 void start_video(){
-    video_on = 1;
-    system("mplayer -loop 0 -slave -quiet -geometry 30:30 -zoom -x 800 -y 480 Never.avi &");
+    if(!video_on){
+        video_on = 1;
+        system(full_command);
+    }
 }
 
 void continue_video(){
@@ -39,14 +51,50 @@ void pause_video(){
     system("killall -STOP mplayer &");
 }
 
+void stop_video(){
+    Black();
+    system("killall -9 mplayer &");
+    video_on = 0;
+}
+
+void new_video() {
+    need_pause =1;
+    if (video_on)
+    {
+        stop_video();
+    }
+    
+    reset_terminal_mode();
+    printf("Please input new video path\r\n->");
+    char tmp_name[1024] = {0};
+    scanf("%s",tmp_name);
+    if(file_exists(tmp_name) != 0){
+        printf("Load new Video\r\n");
+        memcpy(video_name,tmp_name,1024*sizeof(char));
+    } else{
+        printf("[WARN] No such video\r\n");
+    }
+    set_conio_terminal_mode();
+}
+
+void Black(){
+    int c = mix_arbg(0,0,0,0);
+
+    write_region(&c,Screen_to_region(s),s);
+
+}
 int main()
 {
+    s = Screen_new("/dev/fb0",800, 480);
+
+    Black(s);
     set_conio_terminal_mode();
     int ch;
     // system("title betercml for mplayer from EdwardSu");
     load_frame();
     while( 1 ) /* Press ESC to quit... */
     {   
+        sprintf(full_command,"mplayer %s -loop 0 -zoom -x 800 -y 480 & > /dev/null 2>&1",video_name);
         ch = getch();
         switch(ch)
         {
@@ -88,6 +136,8 @@ int main()
             if(video_on){
                 system("killall -9 mplayer &");
             }
+            Black(s);
+
             printf("Goodbye\r\n");
             sleep(2);
             system("clear");
@@ -167,6 +217,7 @@ void load_frame()
     //printf("%s",target);
     system("clear");
     // printf(">This is the Homwwork-%d from @EdwardSu\n\n",Homeworknum);
+    printf("Video %s is ready to be played",video_name);
     printf("you can use the direction key\r\n");
     printf("    [%s]\r\n","/\\");
     printf("  [%c]  [%c]\r\n",'<','>');
@@ -198,7 +249,13 @@ void activate_func()
     ty = target[1];
     //做个函数列表同样是二维存入待选函数名
     (*func_list[ty][tx])();
-    system("pause");
+    // system("pause");
+    if(need_pause){
+
+        printf("Press any key to continue\r\n");
+        getch();
+        need_pause =0;
+    }
     load_frame();
 }
 void null_func()
@@ -214,7 +271,7 @@ void null_func()
 //         printf("[WARN] Necessary documents missing,process interrupt\n");
 //     }
 // }
-// int file_exists(char *filename)//判断文件是否存在
-// {
-//     return (access(filename,0) == 0);
-// }
+int file_exists(char *filename)//判断文件是否存在
+{
+    return (access(filename,0) == 0);
+}

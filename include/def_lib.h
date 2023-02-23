@@ -54,7 +54,7 @@ int getch()
 
 #define Homeworknum 11032021
 #define MAX 100
-#define x_border 1
+#define x_border 2
 #define y_border 3
 
 //--------------
