@@ -8,22 +8,30 @@
 #include <setjmp.h>
 #include <string.h>
 
-
-LCDjpeg LCDjpeg_new(int h,int w,int num_channel){
-    LCDjpeg j;
-    j.width = w;
-    j.height = h;
-    j.num_channel = num_channel;
-    if(j.width > j.height){
-        j.img_direction = H;
+/**
+ * @brief create new LCD jpeg 
+ * 
+ * @param h height
+ * @param w width
+ * @param num_channel color channel (sticked 3 now)
+ * @return LCDjpeg* 
+ */
+LCDjpeg* LCDjpeg_new(int h,int w,int num_channel){
+    LCDjpeg* j = (LCDjpeg *)malloc(sizeof(LCDjpeg));
+    j -> width = w;
+    j -> height = h;
+    j -> num_channel = 3;// only RGB
+    if(j -> width > j -> height){
+        j -> img_direction = H;
     }else{
-        j.img_direction = V;
+        j -> img_direction = V;
     }
-    unsigned long dataSize = w * h * num_channel;
-    if(j.width !=0 && j.height !=0){
-        j.datas = (unsigned char *)malloc(dataSize);
+    // unsigned long dataSize = w * h * num_channel;
+    unsigned long dataSize = w * h * 3; //do not read A
+    if(j -> width !=0 && j -> height !=0){
+        j -> datas = (unsigned char *)malloc(sizeof(unsigned char) *dataSize);
     }else{
-        j.datas = NULL;
+        j -> datas = NULL;
     }
     return j;
 }
@@ -33,8 +41,9 @@ LCDjpeg LCDjpeg_new(int h,int w,int num_channel){
  * 
  * @param j 
  */
-void LCDjpeg_destory(LCDjpeg j){
-    free(j.datas);
+void LCDjpeg_destory(LCDjpeg* j){
+    free(j->datas);
+    free(j);
 }
 
 
@@ -63,12 +72,12 @@ LCDjpeg_error_exit(j_common_ptr cinfo){
  * @param height img height
  * @return unsigned char* 
  */
-LCDjpeg LCDjpeg_read(const char *path){
+LCDjpeg *LCDjpeg_read(const char *path){
 
     FILE *file = fopen(path, "rb");
     if (file == NULL)
     {
-        return LCDjpeg_new(0,0,0);
+        return NULL;
     }
 
     struct jpeg_decompress_struct info; // for jpeg info
@@ -88,7 +97,7 @@ LCDjpeg LCDjpeg_read(const char *path){
         printf("Error occured\n");
         jpeg_destroy_decompress(&info);
         fclose(file);
-        return LCDjpeg_new(0,0,0);
+        return NULL;
 
     }
 
@@ -103,7 +112,7 @@ LCDjpeg LCDjpeg_read(const char *path){
         printf("jpeg_read_header failed\n");
         fclose(file);
         jpeg_destroy_decompress(&info);
-        return LCDjpeg_new(0,0,0);
+        return NULL;
 
     }
 
@@ -119,8 +128,8 @@ LCDjpeg LCDjpeg_read(const char *path){
     // }
 
     // calc size
-    LCDjpeg j = LCDjpeg_new(info.output_height,info.output_width,info.num_components);
-    printf("Readed img %d x %d , channels %d",j.width,j.height,j.num_channel);
+    LCDjpeg* j = LCDjpeg_new(info.output_height,info.output_width,info.num_components);
+    printf("Readed img Header %d x %d , channels %d\n",j->width,j->height,j->num_channel);
     // int w = width = info.output_width;
     // int h = height = info.output_height;
     // int numChannels = info.num_components; // 3 = RGB, 4 = RGBA
@@ -128,24 +137,28 @@ LCDjpeg LCDjpeg_read(const char *path){
 
     // read RGB(A) scanlines one at a time into jdata[]
     // unsigned char *data = (unsigned char *)malloc(dataSize);
-    if (!j.datas)
-        return LCDjpeg_new(0,0,0);
+    if (!j->datas){
+        LCDjpeg_destory(j);
+        return NULL;
+    }
 
     // read jpeg data into memory
-    unsigned char *rowptr;
-    while (info.output_scanline < j.height)
+    unsigned char * rowBuffer[1];
+    while (info.output_scanline < info.output_height)
     {
-        rowptr = j.datas + info.output_scanline * j.width * j.num_channel;
-        jpeg_read_scanlines(&info, &rowptr, 1);
+		rowBuffer[0] = (unsigned char *)(&j->datas[3*info.output_width*info.output_scanline]);
+		jpeg_read_scanlines(&info, rowBuffer, 1);
     }
 
     // finish compress and close file
     jpeg_finish_decompress(&info);
+    jpeg_destroy_decompress(&info);
     fclose(file);
 
-    #ifdef DEBUG
-    printf("Read img %s, %d x %d total read size %ld\n",path,j.width,j.height,sizeof(j.datas));
-    #endif
+    // #ifdef DEBUG
+    // ! can't read size properly
+    // printf("Read img %s, %d x %d total read size %ld\n",path,j->width,j->height,len(j->datas));
+    // #endif
     
     return j;
 }
@@ -199,32 +212,47 @@ unsigned char *LCDJPEG_Stretch_Linear(int w_Dest, int h_Dest, int bit_depth, uns
     return pDest;
 }
 
-int LCDjpeg_calc_size(LCDjpeg j,Screen s,Direct d){
+/**
+ * @brief calc matched size for resize
+ * 
+ * @param j LCDjpeg pointer
+ * @param s Screen
+ * @param d jpeg direction
+ * @return int 
+ */
+int LCDjpeg_calc_size(LCDjpeg* j,Screen s,Direct d){
     int res;
     if(d == V){
-        if(j.height > s.size_y){
-            res = 1.0*s.size_y / j.height * j.width;
+        if(j -> height > s.size_y){
+            res = 1.0*s.size_y / j -> height * j -> width;
         }else{
-            res = j.height;
+            res = j -> height;
         }
     }else{
-        if(j.width > s.size_x){
-            res = 1.0*s.size_x / j.width * j.height;
+        if(j -> width > s.size_x){
+            res = 1.0*s.size_x / j -> width * j -> height;
         }else{
-            res = j.width;
+            res = j -> width;
         }
     }
     return res;
 }
 
-LCDjpeg LCDjpeg_resize_fit(LCDjpeg inputFile,Screen s){
+/**
+ * @brief reszie the old return new which fits given screen and return the new one
+ * 
+ * @param inputFile input LCDjpeg
+ * @param s Screen
+ * @return LCDjpeg* 
+ */
+LCDjpeg* LCDjpeg_resize_fit(LCDjpeg* inputFile,Screen s){
 
     Direct f_direction = H;
-    LCDjpeg res_j;
+    LCDjpeg *res_j;
 
     //TODO change
     //judge direction
-    if(inputFile.height > inputFile.width){
+    if(inputFile -> height > inputFile -> width){
         f_direction = V;
     }
 
@@ -233,61 +261,82 @@ LCDjpeg LCDjpeg_resize_fit(LCDjpeg inputFile,Screen s){
     printf("other is %d\n",x_or_y);
 
     if(f_direction == H){
-        res_j = LCDjpeg_new(x_or_y,s.size_x,inputFile.num_channel);
+        res_j = LCDjpeg_new(x_or_y,s.size_x,inputFile -> num_channel);
     }else if(f_direction == V){
-        res_j = LCDjpeg_new(s.size_y,x_or_y,inputFile.num_channel);
+        res_j = LCDjpeg_new(s.size_y,x_or_y,inputFile -> num_channel);
     }
     // free pre ordered mem
-    free(res_j.datas);
+    free(res_j ->datas);
 
     // write resized imgae
-    res_j.datas = LCDJPEG_Stretch_Linear(res_j.width,res_j.height,res_j.num_channel*8,inputFile.datas,inputFile.width,inputFile.height);
+    res_j ->datas = LCDJPEG_Stretch_Linear(res_j ->width,res_j ->height,res_j ->num_channel*8,inputFile -> datas,inputFile -> width,inputFile -> height);
 
     // LCDjpeg_destory(inputFile);
     #ifdef DEBUG
-    printf("Origin img %d x %d , aftered resized %d x %d\n",inputFile.width,inputFile.height,res_j.width,res_j.height);
+    printf("Origin img %d x %d , aftered resized %d x %d\n",inputFile -> width,inputFile -> height,res_j ->width,res_j ->height);
     #endif
     return res_j;
 
 }
 
-void __write_img(LCDjpeg j,Region r,Screen s){
-    int black = mix_arbg(0,0,0,0);
+/**
+ * @brief [internal func]write LCDjpeg to screen
+ * 
+ * @param j img
+ * @param r region
+ * @param s Screen
+ */
+void __write_img(LCDjpeg* j,Region r,Screen s){
+    int black = mix_arbg(0,255,255,255);//black bg
     write_region(&black,r,s);
     int x = 0, i = 0;
-    int line_len = j.width *j.num_channel;
+    int line_len = j -> width * j -> num_channel;
     #ifdef DEBUG
-    printf("Ready to write img %d x %d in (%d,%d) (%d,%d)\n",j.width,j.height,r.start_point.x,r.start_point.y,r.end_point.x,r.end_point.y);
+    printf("Ready to write img %d x %d in (%d,%d) (%d,%d)\n",j -> width,j -> height,r.start_point.x,r.start_point.y,r.end_point.x,r.end_point.y);
     printf("Line len %d\n",line_len);
     #endif
-    //TODO 目前能发现的问题在这里！！
-    unsigned char * line_buffer = (unsigned char *)malloc(line_len);
-    for(int y = r.start_point.y; y < r.end_point.y; y++){
-        printf("Writing line %d",y);
-        for(i = 0, x = r.start_point.x; x < r.end_point.x; x++){
-            if(j.num_channel == 3){
-                //for RGB
-                *(s.display_mem + (y - 1) * s.size_x + x) = mix_arbg(0,line_buffer[i],line_buffer[i+1],line_buffer[i+2]);
-                // (s.display_mem + (y - 1) * s.size_x + x) = line_buffer[i] << 16 |
-                //                                                     line_buffer[i + 1] << 8 | line_buffer[i + 2] << 0;
-                i += 3;
-            }else {
-                //for RGBA
 
-                *(s.display_mem + (y - 1) * s.size_x + x) = mix_arbg(line_buffer[i+3],line_buffer[i],line_buffer[i+1],line_buffer[i+2]);
-                                                 line_buffer[i + 1] << 8 | line_buffer[i + 2] << 0;
-                i += 4;
-            }
-        }
-        __get_next_line(line_buffer,j.datas,(y - r.start_point.y),line_len);
+    char * line_buffer = malloc(sizeof(char) * line_len);
+    
+    for(int y = r.start_point.y; y < r.end_point.y; y++){
+        // printf("Writing line %d\n",y);
+
+        __get_next_line(line_buffer,j -> datas,(y - r.start_point.y),line_len);
+        write_region_colors(line_buffer,Region_new(Point_new(r.start_point.x,y),Point_new(r.end_point.x,y+1)),s);
+        // printf("%s:%d\n", __FUNCTION__, __LINE__);
+        // for(i = 0, x = r.start_point.x; x < r.end_point.x; x++){
+        //     // if(j -> num_channel == 3){
+        //         //for RGB
+        //         printf("%#x\n", mix_arbg(0,line_buffer[i],line_buffer[i+1],line_buffer[i+2]));
+        //         printf("(x,y):(%d,%d), s.size_x=%d\n",x,y,s.size_x);
+
+        //         // *(s.display_mem + (y - 1) * s.size_x + x) = mix_arbg(0,line_buffer[i],line_buffer[i+1],line_buffer[i+2]);
+        //         // (s.display_mem + (y - 1) * s.size_x + x) = line_buffer[i] << 16 |
+        //         //                                                     line_buffer[i + 1] << 8 | line_buffer[i + 2] << 0;
+        //         i += 3;
+
+        //     // }else {
+        //     //     //for RGBA
+
+        //     //     *(s.display_mem + (y - 1) * s.size_x + x) = mix_arbg(line_buffer[i+3],line_buffer[i],line_buffer[i+1],line_buffer[i+2]);
+        //     //                                      line_buffer[i + 1] << 8 | line_buffer[i + 2] << 0;
+        //     //     i += 4;
+        //     // }
+        // }
     }
 }
 
-void LCDjpeg_print_to_screen(LCDjpeg j,Screen s){
+/**
+ * @brief print given LCDjpeg to given screen
+ * 
+ * @param j 
+ * @param s 
+ */
+void LCDjpeg_print_to_screen(LCDjpeg* j,Screen s){
 
     //fresh background
 
-    int BG_color = RGBA_mix_arbg(RGBA_new(0,255,255,255));
+    int BG_color = RGBA_mix_arbg(RGBA_new(0,0,0,0));
     write_region(&BG_color,Screen_to_region(s),s);
 
     //resize img
@@ -297,11 +346,11 @@ void LCDjpeg_print_to_screen(LCDjpeg j,Screen s){
     int x_offest = 0;
     int y_offest = 0;
 
-    if(j.img_direction == H ){
-        y_offest = 1.0 * (s.size_y - j.height) / 2;
+    if(j -> img_direction == H ){
+        y_offest = 1.0 * (s.size_y - j -> height) / 2;
     }else{
 
-        x_offest = 1.0 * (s.size_x - j.width) / 2;
+        x_offest = 1.0 * (s.size_x - j -> width) / 2;
     }
 
     #ifdef DEBUG
@@ -309,11 +358,19 @@ void LCDjpeg_print_to_screen(LCDjpeg j,Screen s){
     #endif
 
     //create img region
-    Region to_draw = Region_new(Point_new(x_offest,y_offest),Point_new(x_offest+j.width,y_offest+j.height));
+    Region to_draw = Region_new(Point_new(x_offest,y_offest),Point_new(x_offest+j -> width,y_offest+j -> height));
 
     __write_img(j,to_draw,s);
 }
 
+/**
+ * @brief [internal func] return next line in A
+ * 
+ * @param buffer 
+ * @param A 
+ * @param line_count 
+ * @param line_length 
+ */
 void __get_next_line(unsigned char * buffer, unsigned char * A, int line_count,int line_length){
     // printf("Get next-line was called\n");
     memcpy(buffer,A + line_count * line_length,line_length);

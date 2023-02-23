@@ -1,5 +1,16 @@
+/**
+ * @file LCDjpeg.h
+ * @author EdwardSu (zentialeds@gmail.com)
+ * @brief func utils to display img
+ * @version 0.7
+ * @date 2023-02-23
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #ifndef __LCDJPEG__
 #define __LCDJPEG__
+// #define DEBUG
 #include <jconfig.h>
 #include <jerror.h>
 #include <setjmp.h>
@@ -38,14 +49,14 @@ struct lcdjpeg_error{
 typedef struct lcdjpeg_error *lcdjpeg_error;
 
 
-LCDjpeg LCDjpeg_new(int h,int w,int num_channel);
-void LCDjpeg_destory(LCDjpeg j);
-LCDjpeg LCDjpeg_read(const char *path);
+LCDjpeg *LCDjpeg_new(int h,int w,int num_channel);
+void LCDjpeg_destory(LCDjpeg *j);
+LCDjpeg *LCDjpeg_read(const char *path);
 unsigned char *LCDJPEG_Stretch_Linear(int w_Dest, int h_Dest, int bit_depth, unsigned char *src, int w_Src, int h_Src);
-int LCDjpeg_calc_size(LCDjpeg j,Screen s,Direct d);
-LCDjpeg LCDjpeg_resize_fit(LCDjpeg inputFile,Screen s);
-void __write_img(LCDjpeg j,Region r,Screen s);
-void LCDjpeg_print_to_screen(LCDjpeg j,Screen s);
+int LCDjpeg_calc_size(LCDjpeg *j,Screen s,Direct d);
+LCDjpeg *LCDjpeg_resize_fit(LCDjpeg *inputFile,Screen s);
+void __write_img(LCDjpeg *j,Region r,Screen s);
+void LCDjpeg_print_to_screen(LCDjpeg *j,Screen s);
 void __get_next_line(unsigned char * buffer, unsigned char * A, int line_count,int line_length);
 
 #endif
