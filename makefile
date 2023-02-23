@@ -1,5 +1,11 @@
 # VPATH = include
 
+MODE=RELEASE
+
+ifeq ($(MODE), DEBUG)
+CFLAGS += -DEBUG
+endif
+
 HEADER_PATH = -I./include/
 LIB_PATH = -L./lib/
 
@@ -18,20 +24,20 @@ lcd.elf: lcd.o LCDutils.o
 	arm-linux-gcc -o lcd.elf lcd.o LCDutils.o
 
 lcd.o: lcd.c
-	arm-linux-gcc -c lcd.c $(HEADER_PATH)
+	arm-linux-gcc -c $(CFLAGS)  lcd.c $(HEADER_PATH)
 
 LCDutils.o: LCDutils.c
-	arm-linux-gcc -c LCDutils.c $(HEADER_PATH)
+	arm-linux-gcc -c $(CFLAGS)  LCDutils.c $(HEADER_PATH)
 
 # ---------- build lcd_img ---------
 lcd_img.elf:lcd_img.o LCDutils.o LCDjpeg.o
 	arm-linux-gcc -o lcd_img.elf lcd_img.o LCDutils.o LCDjpeg.o $(LIB_PATH) $(LIBS)
 
 lcd_img.o: lcd_img.c 
-	arm-linux-gcc -c lcd_img.c  $(HEADER_PATH)
+	arm-linux-gcc -c $(CFLAGS) lcd_img.c  $(HEADER_PATH)
 
 LCDjpeg.o: LCDjpeg.c
-	arm-linux-gcc -c LCDjpeg.c $(HEADER_PATH)
+	arm-linux-gcc -c $(CFLAGS) LCDjpeg.c $(HEADER_PATH)
 
 
 .PHONY:clean
