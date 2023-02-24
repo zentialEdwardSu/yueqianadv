@@ -68,8 +68,6 @@ LCDjpeg_error_exit(j_common_ptr cinfo){
  * @brief 
  * 
  * @param path img path
- * @param width img width
- * @param height img height
  * @return unsigned char* 
  */
 LCDjpeg *LCDjpeg_read(const char *path){
