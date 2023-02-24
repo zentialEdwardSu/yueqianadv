@@ -46,6 +46,11 @@ Bettercommandline.elf: Bettercommandline.o LCDutils.o
 Bettercommandline.o: Bettercommandline.c
 	arm-linux-gcc -c Bettercommandline.c $(HEADER_PATH)
 
+# -------- build adv -------
+adv.elf:adv.o LCDutils.o LCDjpeg.o
+	arm-linux-gcc -o adv.elf adv.o LCDutils.o LCDjpeg.o $(LIB_PATH) $(LIBS)
+adv.0: adv.c
+	arm-linux-gcc -c $(CFLAGS) adv.c $(HEADER_PATH)
 
 .PHONY:clean
 clean:
