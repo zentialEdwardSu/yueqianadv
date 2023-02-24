@@ -15,7 +15,7 @@
 #include <jerror.h>
 #include <setjmp.h>
 #include <jpeglib.h>
-#include "include/LCDutils.h"
+#include "LCDutils.h"
 
 typedef enum direct{
     H,
