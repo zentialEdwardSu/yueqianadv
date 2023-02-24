@@ -39,6 +39,13 @@ lcd_img.o: lcd_img.c
 LCDjpeg.o: LCDjpeg.c
 	arm-linux-gcc -c $(CFLAGS) LCDjpeg.c $(HEADER_PATH)
 
+# --------- build commandline -------
+Bettercommandline.elf: Bettercommandline.o LCDutils.o
+	arm-linux-gcc -o Bettercommandline.elf Bettercommandline.o LCDutils.o
+
+Bettercommandline.o: Bettercommandline.c
+	arm-linux-gcc -c Bettercommandline.c $(HEADER_PATH)
+
 
 .PHONY:clean
 clean:
