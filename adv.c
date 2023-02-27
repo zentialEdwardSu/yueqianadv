@@ -17,7 +17,7 @@ int main()
     sleep(10);
 
     system("mplayer  1.avi   -zoom  -x  800  -y  480");//播放视频
-    sleep(10);
+    // sleep(10);
 
     LCDjpeg* j2 = LCDjpeg_read("2.jpg");//显示图片
     LCDjpeg_print_to_screen(j2 , s);
