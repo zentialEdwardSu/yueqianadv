@@ -48,10 +48,10 @@ typedef struct Region{
  * 
  */
 typedef struct RGBA {
-    int A; // 0-255
     int R; // 0-255
     int G; // 0-255
     int B; // 0-255
+    int A; // 0-255
 } RGBA;
 
 Point Point_new(int x, int y);
@@ -65,6 +65,7 @@ int Region_calc_y_len(Region *region);
 
 RGBA RGBA_new(int a,int r,int g, int b);
 int RGBA_mix_arbg(RGBA RGBA);
+int RGBA_mix_rgba(RGBA RGBA);
 RGBA RGBA_gradient_next_color(RGBA c,RGBA t_c,int step);
 
 void gradient(RGBA c1, RGBA c2,int step_length,Region region,Screen screen);

@@ -125,6 +125,18 @@ int RGBA_mix_arbg(RGBA RGBA) {
 }
 
 /**
+ * @brief convert RGBA struct to int 0xRRGGBBAA
+ * 
+ * @param RGBA 
+ * @return int 
+ */
+int RGBA_mix_rgba(RGBA RGBA) {
+    // return RGBA.B | RGBA.G<<2*BIT | RGBA.R<<4*BIT | RGBA.A<<6*BIT;
+    return RGBA.A | RGBA.B << 2*BIT | RGBA.G<<4*BIT | RGBA.G<<6*BIT;
+}
+
+
+/**
  * @brief for gradient calc new color base on given color and total step
  * 
  * @param c start color
