@@ -49,7 +49,7 @@ Bettercommandline.o: Bettercommandline.c
 # -------- build adv -------
 adv.elf:adv.o LCDutils.o LCDjpeg.o
 	arm-linux-gcc -o adv.elf adv.o LCDutils.o LCDjpeg.o $(LIB_PATH) $(LIBS)
-adv.0: adv.c
+adv.o: adv.c
 	arm-linux-gcc -c $(CFLAGS) adv.c $(HEADER_PATH)
 
 .PHONY:clean
