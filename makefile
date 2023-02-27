@@ -26,18 +26,12 @@ lcd.elf: lcd.o LCDutils.o
 lcd.o: lcd.c
 	arm-linux-gcc -c $(CFLAGS)  lcd.c $(HEADER_PATH)
 
-LCDutils.o: LCDutils.c
-	arm-linux-gcc -c $(CFLAGS)  LCDutils.c $(HEADER_PATH)
-
 # ---------- build lcd_img ---------
 lcd_img.elf:lcd_img.o LCDutils.o LCDjpeg.o
 	arm-linux-gcc -o lcd_img.elf lcd_img.o LCDutils.o LCDjpeg.o $(LIB_PATH) $(LIBS)
 
 lcd_img.o: lcd_img.c 
 	arm-linux-gcc -c $(CFLAGS) lcd_img.c  $(HEADER_PATH)
-
-LCDjpeg.o: LCDjpeg.c
-	arm-linux-gcc -c $(CFLAGS) LCDjpeg.c $(HEADER_PATH)
 
 # --------- build commandline -------
 Bettercommandline.elf: Bettercommandline.o LCDutils.o
@@ -51,6 +45,21 @@ adv.elf:adv.o LCDutils.o LCDjpeg.o
 	arm-linux-gcc -o adv.elf adv.o LCDutils.o LCDjpeg.o $(LIB_PATH) $(LIBS)
 adv.o: adv.c
 	arm-linux-gcc -c $(CFLAGS) adv.c $(HEADER_PATH)
+
+
+# ---- bild lib ----
+LCDjpeg.o: LCDjpeg.c
+	arm-linux-gcc -c $(CFLAGS) LCDjpeg.c $(HEADER_PATH)
+
+LCDutils.o: LCDutils.c
+	arm-linux-gcc -c $(CFLAGS)  LCDutils.c $(HEADER_PATH)
+
+font.o: font.c
+	arm-linux-gcc -c $(CFLAGS)  font.c $(HEADER_PATH)
+
+truetype.o: truetype.c
+	arm-linux-gcc -c $(CFLAGS)  truetype.c $(HEADER_PATH)
+
 
 .PHONY:clean
 clean:
