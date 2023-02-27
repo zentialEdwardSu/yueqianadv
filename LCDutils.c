@@ -2,6 +2,8 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/fb.h>
 // #include <jpeglib.h>
 
 #include"include/LCDutils.h"
@@ -23,16 +25,19 @@ Point Point_new(int x, int y){
 /**
  * @brief create new Screen struct
  * 
- * @param width 
- * @param height 
+ * @param device devicename
+ * @param width unneeded!!
+ * @param height unneeded!!
  * @return Screen 
  */
 Screen Screen_new(char *device,int width, int height){
     Screen res;
+    struct fb_var_screeninfo fixinfo;
     res.fd = open(device, O_RDWR);
-    res.size_x = width;
-    res.size_y = height;
-    res.display_mem = mmap(NULL, res.size_x * res.size_y * BIT, PROT_WRITE,
+    ioctl(res.fd,FBIOGET_VSCREENINFO, &fixinfo);
+    res.size_x = fixinfo.xres;
+    res.size_y = fixinfo.yres;
+    res.display_mem = mmap(NULL, res.size_x * res.size_y * fixinfo.bits_per_pixel/8, PROT_WRITE,
                    MAP_SHARED, res.fd, 0);
     return res;
 }
