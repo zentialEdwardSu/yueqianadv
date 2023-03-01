@@ -53,10 +53,10 @@ LCDjpeg *LCDjpeg_new(int h,int w,int num_channel);
 void LCDjpeg_destory(LCDjpeg *j);
 LCDjpeg *LCDjpeg_read(const char *path);
 unsigned char *LCDJPEG_Stretch_Linear(int w_Dest, int h_Dest, int bit_depth, unsigned char *src, int w_Src, int h_Src);
-int LCDjpeg_calc_size(LCDjpeg *j,Screen s,Direct d);
-LCDjpeg *LCDjpeg_resize_fit(LCDjpeg *inputFile,Screen s);
+int LCDjpeg_calc_size(LCDjpeg *j,Region r,Direct d);
+LCDjpeg *LCDjpeg_resize_fit(LCDjpeg *inputFile,Region r);
 void __write_img(LCDjpeg *j,Region r,Screen s);
-void LCDjpeg_print_to_screen(LCDjpeg *j,Screen s);
+void LCDjpeg_print_to_screen(LCDjpeg *j,Screen s,Region r);
 void __get_next_line(unsigned char * buffer, unsigned char * A, int line_count,int line_length);
 
 #endif

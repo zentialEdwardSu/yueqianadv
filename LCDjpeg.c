@@ -127,7 +127,9 @@ LCDjpeg *LCDjpeg_read(const char *path){
 
     // calc size
     LCDjpeg* j = LCDjpeg_new(info.output_height,info.output_width,info.num_components);
+    #ifdef DEBUG
     printf("Readed img Header %d x %d , channels %d\n",j->width,j->height,j->num_channel);
+    #endif
     // int w = width = info.output_width;
     // int h = height = info.output_height;
     // int numChannels = info.num_components; // 3 = RGB, 4 = RGBA
@@ -218,17 +220,17 @@ unsigned char *LCDJPEG_Stretch_Linear(int w_Dest, int h_Dest, int bit_depth, uns
  * @param d jpeg direction
  * @return int 
  */
-int LCDjpeg_calc_size(LCDjpeg* j,Screen s,Direct d){
+int LCDjpeg_calc_size(LCDjpeg* j,Region r,Direct d){
     int res;
     if(d == V){
-        if(j -> height > s.size_y){
-            res = 1.0*s.size_y / j -> height * j -> width;
+        if(j -> height > r.region_height){
+            res = 1.0*r.region_height / j -> height * j -> width;
         }else{
             res = j -> height;
         }
     }else{
-        if(j -> width > s.size_x){
-            res = 1.0*s.size_x / j -> width * j -> height;
+        if(j -> width > r.region_width){
+            res = 1.0*r.region_width / j -> width * j -> height;
         }else{
             res = j -> width;
         }
@@ -243,25 +245,26 @@ int LCDjpeg_calc_size(LCDjpeg* j,Screen s,Direct d){
  * @param s Screen
  * @return LCDjpeg* 
  */
-LCDjpeg* LCDjpeg_resize_fit(LCDjpeg* inputFile,Screen s){
+LCDjpeg* LCDjpeg_resize_fit(LCDjpeg* inputFile,Region r){
 
     Direct f_direction = H;
     LCDjpeg *res_j;
 
-    //TODO change
     //judge direction
     if(inputFile -> height > inputFile -> width){
         f_direction = V;
     }
 
     // calc matched size 
-    int x_or_y = LCDjpeg_calc_size(inputFile,s,f_direction);
+    int x_or_y = LCDjpeg_calc_size(inputFile,r,f_direction);
+    #ifdef DEBUG
     printf("other is %d\n",x_or_y);
+    #endif
 
     if(f_direction == H){
-        res_j = LCDjpeg_new(x_or_y,s.size_x,inputFile -> num_channel);
+        res_j = LCDjpeg_new(x_or_y,r.region_width,inputFile -> num_channel);
     }else if(f_direction == V){
-        res_j = LCDjpeg_new(s.size_y,x_or_y,inputFile -> num_channel);
+        res_j = LCDjpeg_new(r.region_height,x_or_y,inputFile -> num_channel);
     }
     // free pre ordered mem
     free(res_j ->datas);
@@ -330,15 +333,16 @@ void __write_img(LCDjpeg* j,Region r,Screen s){
  * @param j 
  * @param s 
  */
-void LCDjpeg_print_to_screen(LCDjpeg* j,Screen s){
+void LCDjpeg_print_to_screen(LCDjpeg* j,Screen s,Region r){
 
     //fresh background
 
     int BG_color = RGBA_mix_arbg(RGBA_new(0,0,0,0));
-    write_region(&BG_color,Screen_to_region(s),s);
+    // write_region(&BG_color,Screen_to_region(s),s);
+    write_region(&BG_color,r,s);
 
     //resize img
-    j = LCDjpeg_resize_fit(j,s);
+    j = LCDjpeg_resize_fit(j,r);
 
     //calc draw region so img can be in the center
     int x_offest = 0;
