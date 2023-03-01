@@ -26,11 +26,10 @@ Point Point_new(int x, int y){
  * @brief create new Screen struct
  * 
  * @param device devicename
- * @param width unneeded!!
- * @param height unneeded!!
+
  * @return Screen 
  */
-Screen Screen_new(char *device,int width, int height){
+Screen Screen_new_ioctl(char *device){
     Screen res;
     struct fb_var_screeninfo fixinfo;
     res.fd = open(device, O_RDWR);
@@ -38,6 +37,24 @@ Screen Screen_new(char *device,int width, int height){
     res.size_x = fixinfo.xres;
     res.size_y = fixinfo.yres;
     res.display_mem = mmap(NULL, res.size_x * res.size_y * fixinfo.bits_per_pixel/8, PROT_WRITE,
+                   MAP_SHARED, res.fd, 0);
+    return res;
+}
+
+/**
+ * @brief create new Screen struct
+ * 
+ * @param device devicename
+ * @param width 
+ * @param height 
+ * @return Screen 
+ */
+Screen Screen_new(char *device,int width, int height){
+    Screen res;
+    res.fd = open(device, O_RDWR);
+    res.size_x = height;
+    res.size_y = width;
+    res.display_mem = mmap(NULL, res.size_x * res.size_y * 3, PROT_WRITE,
                    MAP_SHARED, res.fd, 0);
     return res;
 }
@@ -133,6 +150,19 @@ int RGBA_mix_arbg(RGBA RGBA) {
 int RGBA_mix_rgba(RGBA RGBA) {
     // return RGBA.B | RGBA.G<<2*BIT | RGBA.R<<4*BIT | RGBA.A<<6*BIT;
     return RGBA.A | RGBA.B << 2*BIT | RGBA.G<<4*BIT | RGBA.G<<6*BIT;
+}
+
+/**
+ * @brief use alpha to conbine two color
+ * 
+ * @param c base color
+ * @param rgba to mix color
+ * @param alpha 0-255 alpha var
+ * @return RGBA 
+ */
+RGBA RGBA_do_alpha(RGBA c,RGBA rgba, int alpha){
+    int invAlpha = 255 - alpha;
+    return RGBA_new(0,(alpha * c.R + invAlpha * rgba.R) >> 8,(alpha * c.G + invAlpha * rgba.G) >> 8,(alpha * c.B + invAlpha * rgba.B) >> 8);
 }
 
 

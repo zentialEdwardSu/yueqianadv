@@ -66,6 +66,7 @@ int Region_calc_y_len(Region *region);
 RGBA RGBA_new(int a,int r,int g, int b);
 int RGBA_mix_arbg(RGBA RGBA);
 int RGBA_mix_rgba(RGBA RGBA);
+RGBA RGBA_do_alpha(RGBA c,RGBA rgba, int alpha);
 RGBA RGBA_gradient_next_color(RGBA c,RGBA t_c,int step);
 
 void gradient(RGBA c1, RGBA c2,int step_length,Region region,Screen screen);
@@ -73,6 +74,7 @@ int mix_arbg(int a,int r,int g, int b);
 void write_region(int *color,Region region,Screen s);
 void write_region_colors(char *colors_three_channel,Region region,Screen s);
 void Screen_mumap(Screen screen);
+Screen Screen_new_ioctl(char *device);
 int point_to_int(Point p,Screen s);
 // int* Point_to_int_arr(Point p){
 //     int res[2] = {p.x, p.y};
